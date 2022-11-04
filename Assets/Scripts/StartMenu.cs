@@ -10,22 +10,22 @@ namespace Avangardum.GamezMonsterTestTask
         [SerializeField] private Button _startButton;
         [SerializeField] private List<Button> _difficultyButtons;
         
-        private int _selectedDifficultyIndex;
+        private int _difficulty;
 
         public event EventHandler StartClicked;
-        public event EventHandler<int> SelectedDifficultyIndexChanged;
+        public event EventHandler<int> DifficultyChanged;
         
-        public int SelectedDifficultyIndex
+        public int Difficulty
         {
-            get => _selectedDifficultyIndex;
+            get => _difficulty;
             set
             {
-                _selectedDifficultyIndex = value;
+                _difficulty = value;
                 for (int i = 0; i < _difficultyButtons.Count; i++)
                 {
-                    _difficultyButtons[i].interactable = i != _selectedDifficultyIndex;
+                    _difficultyButtons[i].interactable = i != _difficulty;
                 }
-                SelectedDifficultyIndexChanged?.Invoke(this, _selectedDifficultyIndex);
+                DifficultyChanged?.Invoke(this, _difficulty);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Avangardum.GamezMonsterTestTask
             for (int i = 0; i < _difficultyButtons.Count; i++)
             {
                 var index = i;
-                _difficultyButtons[i].onClick.AddListener(() => SelectedDifficultyIndex = index);
+                _difficultyButtons[i].onClick.AddListener(() => Difficulty = index);
             }
         }
     }

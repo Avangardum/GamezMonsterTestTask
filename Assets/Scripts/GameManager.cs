@@ -14,6 +14,9 @@ namespace Avangardum.GamezMonsterTestTask
         private const float GenerationRange = 10;
         private const float CleanupRange = 20;
         private const float CleanupInterval = 5;
+        private const int DefaultDifficulty = 1;
+        private const string DifficultyPlayerPrefsKey = "Difficulty";
+        private const string TotalTriesCountPlayerPrefsKey = "Total Tries";
         
         [SerializeField] private InputManager _inputManager;
         [SerializeField] private GameObject _playerPrefab;
@@ -40,11 +43,21 @@ namespace Avangardum.GamezMonsterTestTask
         private Coroutine _increaseVerticalSpeedCoroutine;
 
         public Vector2 PlayerPosition => _player.transform.position;
+        
         public bool IsGameActive { get; private set; }
+
+        public int Difficulty
+        {
+            get => PlayerPrefs.GetInt(DifficultyPlayerPrefsKey, DefaultDifficulty);
+            set
+            {
+                PlayerPrefs.SetInt(DifficultyPlayerPrefsKey, value);
+                PlayerPrefs.Save();
+            }
+        }
 
         private void Start()
         {
-            StartGame();
             StartCoroutine(CleanupCoroutine());
         }
 
@@ -74,7 +87,7 @@ namespace Avangardum.GamezMonsterTestTask
             _playerRigidbody.MovePosition(_playerRigidbody.position + movement);
         }
 
-        private void StartGame()
+        public void StartGame()
         {
             // Cleanup
             if (_player != null)
@@ -88,7 +101,7 @@ namespace Avangardum.GamezMonsterTestTask
             _nextObstacleX = _obstacleXInterval;
             _nextBoundsSectionX = -GenerationRange;
             _currentVerticalSpeed = _baseVerticalSpeed;
-            _currentHorizontalSpeed = _horizontalSpeedByDifficulty[1];
+            _currentHorizontalSpeed = _horizontalSpeedByDifficulty[Difficulty];
 
             // Initialize player
             _player = Instantiate(_playerPrefab);
@@ -137,14 +150,14 @@ namespace Avangardum.GamezMonsterTestTask
             while (true)
             {
                 yield return new WaitForSeconds(CleanupInterval);
-                while (!IsCleanupFinished())
+                while (IsCleanupRequired())
                 {
                     Destroy(_levelObjects[0]);
                     _levelObjects.RemoveAt(0);
                 }
             }
             
-            bool IsCleanupFinished() => _levelObjects.Any() && 
+            bool IsCleanupRequired() => _levelObjects.Any() && 
                 _levelObjects[0].transform.position.x < _player.transform.position.x - CleanupRange;
         }
 
