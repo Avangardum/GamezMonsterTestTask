@@ -16,7 +16,7 @@ namespace Avangardum.GamezMonsterTestTask
         private const float CleanupInterval = 5;
         private const int DefaultDifficulty = 1;
         private const string DifficultyPlayerPrefsKey = "Difficulty";
-        private const string TotalTriesCountPlayerPrefsKey = "Total Tries";
+        private const string TotalTriesPlayerPrefsKey = "Total Tries";
         
         [SerializeField] private InputManager _inputManager;
         [SerializeField] private GameObject _playerPrefab;
@@ -41,10 +41,16 @@ namespace Avangardum.GamezMonsterTestTask
         private float _currentVerticalSpeed;
         private float _currentHorizontalSpeed;
         private Coroutine _increaseVerticalSpeedCoroutine;
+        private float _startTime;
+        private float _gameOverTime;
 
+        public event EventHandler GameOver;
+        
         public Vector2 PlayerPosition => _player.transform.position;
         
         public bool IsGameActive { get; private set; }
+
+        public float SurvivalTime => _gameOverTime - _startTime;
 
         public int Difficulty
         {
@@ -52,6 +58,16 @@ namespace Avangardum.GamezMonsterTestTask
             set
             {
                 PlayerPrefs.SetInt(DifficultyPlayerPrefsKey, value);
+                PlayerPrefs.Save();
+            }
+        }
+        
+        public int TotalTries
+        {
+            get => PlayerPrefs.GetInt(TotalTriesPlayerPrefsKey);
+            private set
+            {
+                PlayerPrefs.SetInt(TotalTriesPlayerPrefsKey, value);
                 PlayerPrefs.Save();
             }
         }
@@ -95,6 +111,7 @@ namespace Avangardum.GamezMonsterTestTask
                 Destroy(_player);
             }
             _levelObjects.ForEach(Destroy);
+            _levelObjects.Clear();
 
             // Set variables
             _lastGenerationEndX = -GenerationRange;
@@ -102,6 +119,8 @@ namespace Avangardum.GamezMonsterTestTask
             _nextBoundsSectionX = -GenerationRange;
             _currentVerticalSpeed = _baseVerticalSpeed;
             _currentHorizontalSpeed = _horizontalSpeedByDifficulty[Difficulty];
+            _startTime = Time.time;
+            TotalTries++;
 
             // Initialize player
             _player = Instantiate(_playerPrefab);
@@ -170,9 +189,11 @@ namespace Avangardum.GamezMonsterTestTask
             }
         }
         
-        private void OnPlayerCollision(object sender, Collider2D collider)
+        private void OnPlayerCollision(object sender, Collider2D other)
         {
             IsGameActive = false;
+            _gameOverTime = Time.time;
+            GameOver?.Invoke(this, EventArgs.Empty);
         }
     }
 }
